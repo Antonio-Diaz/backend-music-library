@@ -15,12 +15,10 @@ from utils.CustomException import get_token_exception, get_user_exception
 from utils.Responses import ResponseSuccess, ResponseFailure, ResponseWarning
 from utils.fields import check_if_exists_field
 from utils.passwords import check_encrypted_password
-
-SECRET_KEY = "a1b2c3d4e5f6g7h8i9j0"
-ALGORITHM = "HS256"
+from config.Environment import get_environment_variable
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="token")
-
+env = get_environment_variable()
 
 class AuthRepository:
     db: Session
@@ -45,12 +43,12 @@ class AuthRepository:
         else:
             expire = datetime.utcnow() + timedelta(minutes=15)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(to_encode, env.SECRET_KEY, algorithm=env.ALGORITHM)
         return encoded_jwt
 
     def get_current_user(self, token: str = Depends(oauth2_schema)):
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, env.SECRET_KEY, algorithms=[env.ALGORITHM])
             username: str = payload.get("username")
             user_id: int = payload.get("user_id")
             if username is None or user_id is None:
